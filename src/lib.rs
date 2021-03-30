@@ -8,7 +8,7 @@ pub const RUSTFMT_VERSION: &str = "rustfmt 1.4.36-nightly (7de6968 2021-02-07)";
 use rayon::prelude::*;
 use std::{
     fs::File,
-    io::{BufRead, BufReader},
+    io::{stdout, BufRead, BufReader, BufWriter},
     path::Path
 };
 
@@ -22,24 +22,42 @@ pub enum Error {
     SerdeJson(#[from] serde_json::error::Error)
 }
 
-pub fn read_search_index<P: AsRef<Path>>(src: P) -> Result<Vec<(String, doc::Crate)>, Error> {
-    let file = File::open(src.as_ref())?;
-    let reader = BufReader::new(file);
-    // one crate per one line
-    let mut lines = reader.lines();
-    lines.next(); // remove first line
-    lines
-        .par_bridge()
-        .map(|l| l.map_err(Error::from))
-        .filter(|l| {
-            if let Ok(l) = &l {
-                l != "}');" && l != "initSearch(searchIndex);"
-            } else {
-                true
-            }
-        })
-        .map(|l| l.and_then(parse_line))
-        .collect()
+pub async fn read_search_index_and_show<P: AsRef<Path>>(src: P) -> Result<(), Error> {
+    // read
+    let doc = {
+        let file = File::open(src.as_ref())?;
+        let reader = BufReader::new(file);
+        // one crate per one line
+        let mut lines = reader.lines();
+        lines.next(); // remove first line
+        lines
+            .par_bridge()
+            .map(|l| l.map_err(Error::from))
+            .filter(|l| {
+                if let Ok(l) = &l {
+                    l != "}');" && l != "initSearch(searchIndex);"
+                } else {
+                    true
+                }
+            })
+            .map(|l: Result<String, Error>| l.and_then(parse_line))
+            .map(|r: Result<_, Error>| r.map(|(_name, krate)| krate.n))
+    };
+    // show
+    {
+        // let out = stdout();
+        // let mut out = BufWriter::new(out.lock());
+        doc.try_for_each(|r: Result<Vec<String>, Error>| -> Result<(), _> {
+            r.and_then(|ss| -> Result<_, _> {
+                for x in ss {
+                    println!("{:?}", x);
+                }
+                Ok(())
+            })
+        })?
+    }
+
+    Ok(())
 }
 
 fn parse_line(line: String) -> Result<(String, doc::Crate), Error> {
@@ -83,7 +101,7 @@ pub mod doc {
 
         f: Vec<Option<Types>>,
         t: Vec<usize>,
-        n: Vec<String>,
+        pub n: Vec<String>,
         q: Vec<String>,
         d: Vec<String>,
         i: Vec<usize>

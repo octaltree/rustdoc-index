@@ -1,7 +1,10 @@
-all: format lint test doc
+release:
+	cargo build --release
+
+dev: format lint test doc
 
 d:
-	cargo watch -c -s 'make all'
+	cargo watch -c -s 'make dev'
 
 format:
 	cargo fmt
