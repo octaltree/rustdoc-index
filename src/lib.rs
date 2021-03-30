@@ -1,5 +1,9 @@
 #[macro_use]
 extern crate serde;
+#[macro_use]
+extern crate thiserror;
+
+pub const RUSTFMT_VERSION: &str = "rustfmt 1.4.36-nightly (7de6968 2021-02-07)";
 
 use rayon::prelude::*;
 use std::{
@@ -7,9 +11,8 @@ use std::{
     io::{BufRead, BufReader},
     path::Path
 };
-use string_cache::DefaultAtom as Atom;
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, Error)]
 pub enum Error {
     #[error("Not supported format of search-index.json")]
     InvalidFormat(String),
@@ -19,15 +22,14 @@ pub enum Error {
     SerdeJson(#[from] serde_json::error::Error)
 }
 
-// TODO: data parallel
-// TODO: CRLF
-// one crate per one line
 pub fn read_search_index<P: AsRef<Path>>(src: P) -> Result<Vec<(String, doc::Crate)>, Error> {
     let file = File::open(src.as_ref())?;
     let reader = BufReader::new(file);
+    // one crate per one line
     let mut lines = reader.lines();
     lines.next(); // remove first line
     lines
+        .par_bridge()
         .map(|l| l.map_err(Error::from))
         .filter(|l| {
             if let Ok(l) = &l {
@@ -52,7 +54,7 @@ fn parse_line(line: String) -> Result<(String, doc::Crate), Error> {
     let colon_idx = line
         .find(':')
         .ok_or_else(|| Error::InvalidFormat(line.clone()))?;
-    let (mut name_colon, mut body) = {
+    let (mut name_colon, body) = {
         let body = line.split_off(colon_idx + 1);
         (line, body)
     };
@@ -64,43 +66,40 @@ fn parse_line(line: String) -> Result<(String, doc::Crate), Error> {
         quoted_name.pop();
         quoted_name.split_off(1)
     };
-    println!("{}", &name);
     let body = unescape::unescape(&body).ok_or_else(|| Error::InvalidFormat(body.clone()))?;
+    println!("{}", &name);
     let krate: doc::Crate = serde_json::from_str(&body).unwrap();
     Ok((name, krate))
 }
 
-// pub fn fix_json<S: AsRef<str>>(json: S) -> String {
-//    let mut is_escape = false;
-//    let mut is_string = false;
-//    let mut buffer = String::with_capacity(1024);
-
-//    for chr in json.as_ref().chars() {
-//        match chr {
-//            'N' if !is_string => {
-//                buffer.push_str("null");
-//                continue;
-//            }
-//            '"' if !is_escape => is_string = !is_string,
-//            '\\' if !is_escape => is_escape = true,
-//            _ => is_escape = false
-//        };
-//        buffer.push(chr);
-//    }
-
-//    buffer
-//}
-
 pub mod doc {
     use string_cache::DefaultAtom as Atom;
 
+    // t, n, q, d, i, f are items array
     #[derive(Debug, Deserialize)]
     pub struct Crate {
-        // t, n, q, d, f, i, p
-        //#[serde(rename = "i")]
-        // items: Vec<IndexItem>,
-        //#[serde(rename = "p")]
-        // paths: Vec<Parent>
-        doc: Atom
+        doc: Atom,
+        p: Vec<(usize, String)>,
+
+        f: Vec<Option<Types>>,
+        t: Vec<usize>,
+        n: Vec<String>,
+        q: Vec<String>,
+        d: Vec<String>,
+        i: Vec<usize>
+    }
+
+    #[derive(Debug, Deserialize)]
+    #[serde(untagged)]
+    pub enum Types {
+        OnlyArgs((Vec<(String, usize)>,)),
+        WithResponse(Vec<(String, usize)>, ResponseType)
+    }
+
+    #[derive(Debug, Deserialize)]
+    #[serde(untagged)]
+    pub enum ResponseType {
+        Single((String, usize)),
+        Complex(Vec<(String, usize)>)
     }
 }
