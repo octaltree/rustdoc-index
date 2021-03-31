@@ -4,6 +4,7 @@ extern crate serde;
 extern crate thiserror;
 
 pub const RUSTFMT_VERSION: &str = "rustfmt 1.4.36-nightly (7de6968 2021-02-07)";
+pub mod dir;
 pub mod doc;
 
 use rayon::prelude::*;
@@ -61,7 +62,8 @@ pub fn read_search_index_and_show<P: AsRef<Path>>(src: P) -> Result<(), Error> {
     Ok(())
 }
 
-fn parse_line(line: String) -> Result<(String, doc::Crate), Error> {
+/// Parses one line `"name":{..},`
+pub fn parse_line(line: String) -> Result<(String, doc::Crate), Error> {
     let mut line = {
         let mut line = line;
         line.pop(); // last backslash

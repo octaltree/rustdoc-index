@@ -16,3 +16,7 @@ unescape = "0.1.0"
 tokio = { version = "1.4.0", features = ["io-util", "macros", "rt-multi-thread"] }
 serde_repr = "0.1.6"
 #timey = "0.2.0"
+
+[[bin]]
+name = "cargo-doc-index"
+path = "src/main.rs"
