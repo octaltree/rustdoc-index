@@ -1,6 +1,9 @@
 release:
 	cargo build --release
 
+denite: release
+	sh -c 'cp -r denite/* .'
+
 dev: format lint test doc
 
 d:
