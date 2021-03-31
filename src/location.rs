@@ -37,7 +37,7 @@ pub const FILETYPE: &[ItemType] = &[
 
 pub async fn location_from_line(line: &str) -> Result<Option<String>, Error> {
     let (fst, snd) = {
-        let mut a = line.split('\t');
+        let mut a = line.split_whitespace();
         a.next()
             .and_then(|fst| a.next().map(|snd| (fst, snd)))
             .ok_or(LocationError::InvalidFormat)
