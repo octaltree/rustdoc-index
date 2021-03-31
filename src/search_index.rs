@@ -23,7 +23,10 @@ pub fn find_std() -> Result<Option<PathBuf>, Error> {
 }
 
 pub fn find_local() -> Result<Option<PathBuf>, Error> {
-    let meta = metadata()?;
+    let meta = match metadata() {
+        Ok(x) => x,
+        Err(_) => return Ok(None)
+    };
     let dir = meta.target_directory.join_os("doc");
     if !dir.is_dir() {
         return Ok(None);
