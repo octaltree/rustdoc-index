@@ -48,10 +48,7 @@ pub fn read_search_index_and_show<P: AsRef<Path>>(src: P) -> Result<(), Error> {
         doc.try_for_each(|r: Result<(String, doc::Crate), Error>| -> Result<(), _> {
             let out = stdout();
             let mut out = BufWriter::new(out.lock());
-            r.and_then(|(name, krate)| -> Result<_, _> {
-                if name != "std" {
-                    return Ok(());
-                }
+            r.and_then(|(_name, krate)| -> Result<_, _> {
                 for path in krate.items() {
                     writeln!(out, "{}", path)?;
                 }
@@ -89,7 +86,6 @@ fn parse_line(line: String) -> Result<(String, doc::Crate), Error> {
         quoted_name.split_off(1)
     };
     let body = unescape::unescape(&body).ok_or_else(|| Error::InvalidFormat(body.clone()))?;
-    println!("{}", &name);
     let krate: doc::Crate = serde_json::from_str(&body)?;
     Ok((name, krate))
 }

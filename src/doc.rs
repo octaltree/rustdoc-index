@@ -1,4 +1,3 @@
-use std::iter;
 use string_cache::DefaultAtom as Atom;
 
 #[derive(Debug, Deserialize)]
@@ -8,7 +7,7 @@ pub struct Crate {
 
     // t, n, q, d, i, f are items array
     t: Vec<ItemType>,
-    pub n: Vec<String>,
+    n: Vec<String>,
     f: Vec<Option<Types>>,
     q: Vec<String>,
     d: Vec<String>,
@@ -42,7 +41,7 @@ pub enum ParentType {
 }
 
 /// rust/src/librustdoc/formats/item_type.rs
-#[derive(Debug, serde_repr::Deserialize_repr)]
+#[derive(Debug, serde_repr::Deserialize_repr, PartialEq, Eq, Clone, Copy)]
 #[repr(u8)]
 pub enum ItemType {
     Module = 0,
@@ -73,31 +72,61 @@ pub enum ItemType {
     TraitAlias = 25
 }
 
+impl ItemType {
+    fn as_str(&self) -> &'static str {
+        match *self {
+            ItemType::Module => "mod",
+            ItemType::ExternCrate => "externcrate",
+            ItemType::Import => "import",
+            ItemType::Struct => "struct",
+            ItemType::Union => "union",
+            ItemType::Enum => "enum",
+            ItemType::Function => "fn",
+            ItemType::Typedef => "type",
+            ItemType::Static => "static",
+            ItemType::Trait => "trait",
+            ItemType::Impl => "impl",
+            ItemType::TyMethod => "tymethod",
+            ItemType::Method => "method",
+            ItemType::StructField => "structfield",
+            ItemType::Variant => "variant",
+            ItemType::Macro => "macro",
+            ItemType::Primitive => "primitive",
+            ItemType::AssocType => "associatedtype",
+            ItemType::Constant => "constant",
+            ItemType::AssocConst => "associatedconstant",
+            ItemType::ForeignType => "foreigntype",
+            ItemType::Keyword => "keyword",
+            ItemType::OpaqueTy => "opaque",
+            ItemType::ProcAttribute => "attr",
+            ItemType::ProcDerive => "derive",
+            ItemType::TraitAlias => "traitalias"
+        }
+    }
+}
+
 impl Crate {
+    // TODO: duplicated methods
     pub fn items(self) -> Vec<String> {
         let Self { p, t, n, q, i, .. } = self;
-        let mut vars = iter::repeat(String::new())
-            .take(p.len() + 1)
-            .collect::<Vec<String>>();
-        let mut result = iter::repeat(String::new())
-            .take(t.len())
-            .collect::<Vec<String>>();
         let items = (0..)
             .zip(t.into_iter())
             .zip(n.into_iter())
             .zip(i.into_iter())
             .zip(q.into_iter())
             .map(|((((no, t), n), i), q)| (no, t, n, i, q));
-        let mut last_path: &str = "";
-        for (no, _t, n, i, q) in items {
-            if q != "" {
-                vars[i] = q;
-            } else if vars[i] == "" {
-                vars[i] = last_path.to_owned();
-            }
-            result[no] = format!("{}::{}", &vars[i], n);
-            last_path = &result[no];
-        }
-        result
+        let mut cd: String = String::new();
+        items
+            .map(|(_no, t, n, i, q)| {
+                if !q.is_empty() {
+                    cd = q;
+                }
+                if i == 0 {
+                    format!("{}::{}	{}", &cd, n, t.as_str())
+                } else {
+                    format!("{}::{}::{}	{}", &cd, p[i - 1].1, n, t.as_str())
+                }
+            })
+            .collect()
     }
 }
