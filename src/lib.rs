@@ -4,8 +4,8 @@ extern crate serde;
 extern crate thiserror;
 
 pub const RUSTFMT_VERSION: &str = "rustfmt 1.4.36-nightly (7de6968 2021-02-07)";
-pub mod dir;
 pub mod doc;
+pub mod search_index;
 
 use rayon::prelude::*;
 use std::{
@@ -21,7 +21,11 @@ pub enum Error {
     #[error(transparent)]
     Io(#[from] std::io::Error),
     #[error(transparent)]
-    SerdeJson(#[from] serde_json::error::Error)
+    SerdeJson(#[from] serde_json::error::Error),
+    #[error(transparent)]
+    Metadata(#[from] cargo_metadata::Error),
+    #[error(transparent)]
+    Join(#[from] tokio::task::JoinError)
 }
 
 pub fn read_search_index_and_show<P: AsRef<Path>>(src: P) -> Result<(), Error> {
