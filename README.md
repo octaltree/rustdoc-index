@@ -1,5 +1,7 @@
 # rustdoc-index
 
+[![crates.io](https://img.shields.io/crates/v/rustdoc-index)](https://crates.io/crates/rustdoc-index) [![docs.rs](https://docs.rs/rustdoc-index/badge.svg)](https://docs.rs/rustdoc-index/) ![](https://github.com/octaltree/rustdoc-index/workflows/Build/badge.svg)
+
 A tool to quickly find the relevant item from rustdoc.
 
 ## Usage
