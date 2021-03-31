@@ -8,7 +8,7 @@ pub const RUSTFMT_VERSION: &str = "rustfmt 1.4.36-nightly (7de6968 2021-02-07)";
 use rayon::prelude::*;
 use std::{
     fs::File,
-    io::{stdout, BufRead, BufReader, BufWriter},
+    io::{stdout, BufRead, BufReader, BufWriter, Write},
     path::Path
 };
 
@@ -45,12 +45,12 @@ pub async fn read_search_index_and_show<P: AsRef<Path>>(src: P) -> Result<(), Er
     };
     // show
     {
-        // let out = stdout();
-        // let mut out = BufWriter::new(out.lock());
         doc.try_for_each(|r: Result<Vec<String>, Error>| -> Result<(), _> {
+            let out = stdout();
+            let mut out = BufWriter::new(out.lock());
             r.and_then(|ss| -> Result<_, _> {
                 for x in ss {
-                    println!("{:?}", x);
+                    writeln!(out, "{:?}", x)?;
                 }
                 Ok(())
             })
