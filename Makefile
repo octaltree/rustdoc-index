@@ -1,8 +1,10 @@
+.PHONY: release doc d dev denite test
+
 release:
 	cargo build --release
 
 denite: release
-	sh -c 'cp -r denite/* .'
+	ln -sf denite/* .
 
 dev: format lint test doc
 
