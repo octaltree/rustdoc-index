@@ -29,3 +29,4 @@ file:///home/octaltree/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu/share
 ```sh
 cargo ls-doc | fzf --bind 'ctrl-i:execute(cargo ls-doc location {}| xargs firefox)'
 ```
+![](https://user-images.githubusercontent.com/7942952/113164022-b2016280-927b-11eb-85fa-0870b817b7cd.gif)
