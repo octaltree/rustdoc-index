@@ -13,7 +13,7 @@ lint:
 	cargo clippy --all-targets
 
 test:
-	cargo tarpaulin
+	cargo test
 
 doc:
 	cargo doc
