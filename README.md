@@ -4,6 +4,9 @@
 
 A tool to quickly find the relevant item from rustdoc.
 
+## Installation
+$ cargo install rustdoc-index
+
 ## Usage
 ```sh
 $ cargo ls-doc
