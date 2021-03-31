@@ -5,6 +5,7 @@ extern crate thiserror;
 
 pub const RUSTFMT_VERSION: &str = "rustfmt 1.4.36-nightly (7de6968 2021-02-07)";
 pub mod doc;
+pub mod location;
 pub mod search_index;
 
 use rayon::prelude::*;
@@ -25,7 +26,9 @@ pub enum Error {
     #[error(transparent)]
     Metadata(#[from] cargo_metadata::Error),
     #[error(transparent)]
-    Join(#[from] tokio::task::JoinError)
+    Join(#[from] tokio::task::JoinError),
+    #[error(transparent)]
+    Location(#[from] location::LocationError)
 }
 
 pub fn read_search_index_and_show<P: AsRef<Path>>(src: P) -> Result<(), Error> {

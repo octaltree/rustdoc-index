@@ -1,8 +1,8 @@
-use string_cache::DefaultAtom as Atom;
+use std::str::FromStr;
 
 #[derive(Debug, Deserialize)]
 pub struct Crate {
-    doc: Atom,
+    // doc: String,
     p: Vec<(ParentType, String)>,
 
     // t, n, q, d, i, f are items array
@@ -72,8 +72,24 @@ pub enum ItemType {
     TraitAlias = 25
 }
 
+pub const FILETYPE: &[ItemType] = &[
+    ItemType::Struct,
+    ItemType::Union,
+    ItemType::Enum,
+    ItemType::Function,
+    ItemType::Typedef,
+    ItemType::Static,
+    ItemType::Trait,
+    ItemType::Macro,
+    ItemType::Primitive,
+    ItemType::Constant,
+    ItemType::Keyword,
+    ItemType::ProcAttribute,
+    ItemType::ProcDerive
+];
+
 impl ItemType {
-    fn as_str(&self) -> &'static str {
+    pub fn as_str(&self) -> &'static str {
         match *self {
             ItemType::Module => "mod",
             ItemType::ExternCrate => "externcrate",
@@ -101,6 +117,46 @@ impl ItemType {
             ItemType::ProcAttribute => "attr",
             ItemType::ProcDerive => "derive",
             ItemType::TraitAlias => "traitalias"
+        }
+    }
+}
+
+#[derive(Debug, Error)]
+#[error("Failed to parse ItemType")]
+pub struct ParseItemTypeError;
+
+impl FromStr for ItemType {
+    type Err = ParseItemTypeError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "mod" => Ok(ItemType::Module),
+            "externcrate" => Ok(ItemType::ExternCrate),
+            "import" => Ok(ItemType::Import),
+            "struct" => Ok(ItemType::Struct),
+            "union" => Ok(ItemType::Union),
+            "enum" => Ok(ItemType::Enum),
+            "fn" => Ok(ItemType::Function),
+            "type" => Ok(ItemType::Typedef),
+            "static" => Ok(ItemType::Static),
+            "trait" => Ok(ItemType::Trait),
+            "impl" => Ok(ItemType::Impl),
+            "tymethod" => Ok(ItemType::TyMethod),
+            "method" => Ok(ItemType::Method),
+            "structfield" => Ok(ItemType::StructField),
+            "variant" => Ok(ItemType::Variant),
+            "macro" => Ok(ItemType::Macro),
+            "primitive" => Ok(ItemType::Primitive),
+            "associatedtype" => Ok(ItemType::AssocType),
+            "constant" => Ok(ItemType::Constant),
+            "associatedconstant" => Ok(ItemType::AssocConst),
+            "foreigntype" => Ok(ItemType::ForeignType),
+            "keyword" => Ok(ItemType::Keyword),
+            "opaque" => Ok(ItemType::OpaqueTy),
+            "attr" => Ok(ItemType::ProcAttribute),
+            "derive" => Ok(ItemType::ProcDerive),
+            "traitalias" => Ok(ItemType::TraitAlias),
+            _ => Err(ParseItemTypeError)
         }
     }
 }
