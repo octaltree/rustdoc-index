@@ -49,3 +49,5 @@ build = 'make denite'
 ```vim
 :Denite rustdoc-index
 ```
+
+This is highly inspired by [rhysd/rust-doc.vim](https://github.com/rhysd/rust-doc.vim). If you need the unite interface, please use that one.
