@@ -74,7 +74,5 @@ class Source(Base):
         return candidates
 
     def highlight(self):
-        self.vim.command('syntax match {}_Identifier /\%(::\)\@<=\h\w*\>\%(\s*\[\)\@=/ contained containedin={} display'.format(self.syntax_name, self.syntax_name))
-        self.vim.command('syntax match {}_Tag /.*/ contained containedin={} display'.format(self.syntax_name, self.syntax_name))
+        self.vim.command('syntax match {}_Identifier /\%(::\)\@<=\h\w*\>\%(\s\)\@=/ contained containedin={} display'.format(self.syntax_name, self.syntax_name))
         self.vim.command('highlight default link {}_Identifier Identifier'.format(self.syntax_name))
-        self.vim.command('highlight default link {}_Tag Tag'.format(self.syntax_name))
