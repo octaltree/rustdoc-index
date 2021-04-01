@@ -1,1 +1,7 @@
 /target
+__pycache__
+/autoload
+/doc
+/plugin
+/ftplugin
+/rplugin
