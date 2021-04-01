@@ -18,6 +18,7 @@ lint:
 	cargo clippy --all-targets
 
 test:
+	cargo build
 	cargo test --all-targets
 
 doc:
