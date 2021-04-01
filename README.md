@@ -34,11 +34,18 @@ cargo ls-doc | fzf --bind 'ctrl-i:execute(cargo ls-doc location {}| xargs firefo
 ```
 ![](https://user-images.githubusercontent.com/7942952/113164022-b2016280-927b-11eb-85fa-0870b817b7cd.gif)
 
-### Vim integration
+## Vim integration
 [denite](https://github.com/Shougo/denite.nvim) source is available.
+
+### Installation
 This is how to install using [denite](https://github.com/Shougo/dein.vim).
 ```toml
 [[plugins]]
 repo = 'octaltree/rustdoc-index'
 build = 'make denite'
+```
+
+### Usage
+```vim
+:Denite rustdoc-index
 ```
