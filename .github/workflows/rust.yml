@@ -24,5 +24,7 @@ jobs:
         components: rustfmt, clippy
     - name: Lint
       run: cargo clippy --all-targets
+    - name: Doc
+      run: caro doc
     - name: Test
       run: cargo test --all-targets

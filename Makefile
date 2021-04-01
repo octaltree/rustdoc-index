@@ -6,7 +6,7 @@ release:
 denite: release
 	ln -sf denite/* .
 
-dev: format lint test doc
+dev: format lint doc test
 
 d:
 	cargo watch -c -s 'make dev'
@@ -18,7 +18,7 @@ lint:
 	cargo clippy --all-targets
 
 test:
-	cargo test
+	cargo test --all-targets
 
 doc:
 	cargo doc
