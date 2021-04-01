@@ -11,7 +11,7 @@ struct Opt {
 
 #[derive(Debug, StructOpt)]
 enum SubCommand {
-    List,
+    Show,
     Location(Location)
 }
 
@@ -29,8 +29,8 @@ async fn main() -> Result<(), Error> {
 }
 
 async fn run(opt: Opt) -> Result<(), Error> {
-    match opt.sub.unwrap_or(SubCommand::List) {
-        SubCommand::List => list().await,
+    match opt.sub.unwrap_or(SubCommand::Show) {
+        SubCommand::Show => list().await,
         SubCommand::Location(args) => location(args).await
     }
 }

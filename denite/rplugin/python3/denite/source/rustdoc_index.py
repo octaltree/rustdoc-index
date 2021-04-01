@@ -14,7 +14,7 @@ def find_command():
     project_root = here.parent.parent.parent.parent.parent
     return str(project_root / 'target' / 'release' / 'cargo-listdoc')
 
-COMMAND = ['cargo', 'listdoc', 'list']
+COMMAND = ['cargo', 'listdoc', 'show']
 COMMAND[0] = find_command()
 
 class Source(Base):
