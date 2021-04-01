@@ -7,13 +7,21 @@ import typing
 from ..process import Process
 from ..util import  abspath, UserContext, Candidates
 
+from pathlib import Path
+
+def find_command():
+    here = Path(__file__).resolve().parent
+    project_root = here.parent.parent.parent.parent.parent
+    return str(project_root / 'target' / 'release' / 'cargo-ls-doc')
+
 COMMAND = ['cargo', 'ls-doc', 'list']
+COMMAND[0] = find_command()
 
 class Source(Base):
     def __init__(self, vim):
         super().__init__(vim)
         self.name = 'rustdoc-index'
-        self.kind = 'rustdoc-index/url'
+        self.kind = 'rustdoc-index'
         self._cache_threshold = 10000
         self._cache: typing.Dict[str, Candidates] = {}
 
