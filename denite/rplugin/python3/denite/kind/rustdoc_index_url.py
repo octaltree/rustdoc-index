@@ -5,9 +5,9 @@ from pathlib import Path
 def find_command():
     here = Path(__file__).resolve().parent
     project_root = here.parent.parent.parent.parent.parent
-    return str(project_root / 'target' / 'release' / 'cargo-ls-doc')
+    return str(project_root / 'target' / 'release' / 'cargo-listdoc')
 
-COMMAND = ['cargo', 'ls-doc', 'location']
+COMMAND = ['cargo', 'listdoc', 'location']
 COMMAND[0] = find_command()
 
 class Kind(Base):

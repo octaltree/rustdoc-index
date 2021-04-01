@@ -9,7 +9,7 @@ $ cargo install rustdoc-index
 
 ## Usage
 ```sh
-$ cargo ls-doc
+$ cargo listdoc
 std::prelude	mod
 std::prelude::v1	mod
 std::prelude::rust_2015	mod
@@ -24,13 +24,13 @@ std::f32::consts::FRAC_PI_2	constant
 ```
 
 ```sh
-$ cargo ls-doc location "std::f32::consts::PI	constant"
+$ cargo listdoc location "std::f32::consts::PI	constant"
 file:///home/octaltree/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu/share/doc/rust/html/std/f32/consts/constant.PI.html
 ```
 
 ### With [junegunn/fzf](https://github.com/junegunn/fzf)
 ```sh
-cargo ls-doc | fzf --bind 'ctrl-i:execute(cargo ls-doc location {}| xargs firefox)'
+cargo listdoc | fzf --bind 'ctrl-i:execute(cargo listdoc location {}| xargs firefox)'
 ```
 ![](https://user-images.githubusercontent.com/7942952/113164022-b2016280-927b-11eb-85fa-0870b817b7cd.gif)
 

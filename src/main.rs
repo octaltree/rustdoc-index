@@ -3,7 +3,7 @@ use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
 struct Opt {
-    #[structopt(name = "ls-doc")]
+    #[structopt(name = "listdoc")]
     _void: String,
     #[structopt(subcommand)]
     pub sub: Option<SubCommand>
