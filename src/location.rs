@@ -43,6 +43,15 @@ pub async fn location_from_line(line: &str) -> Result<String, Error> {
     let (path_components, ty) = parse_line(line)?;
     let (krate_name, tail): (_, &[&str]) = split_krate(&path_components)?;
     let search_index: PathBuf = find_search_index(krate_name)?;
+    find(&search_index, krate_name, tail, ty)
+}
+
+fn find(
+    search_index: &Path,
+    krate_name: &str,
+    tail: &[&str],
+    ty: ItemType
+) -> Result<String, Error> {
     let doc_dir: &Path = search_index.parent().unwrap();
     let krate_dir: PathBuf = cd_krate_dir(doc_dir, krate_name)?;
     let (file, rest) = find_file(&krate_dir, tail).ok_or(LocationError::FileNotFound)?;
@@ -70,7 +79,7 @@ fn split_krate<'a, 'b>(
 }
 
 fn find_search_index(krate_name: &str) -> Result<PathBuf, Error> {
-    let search_index: PathBuf = if is_std_crates(krate_name) {
+    let search_index: PathBuf = if is_std_krate(krate_name) {
         crate::search_index::find_std()
     } else {
         crate::search_index::find_local()
@@ -80,7 +89,7 @@ fn find_search_index(krate_name: &str) -> Result<PathBuf, Error> {
 }
 
 #[inline]
-fn is_std_crates(name: &str) -> bool { STD_CRATES.iter().any(|c| *c == name) }
+fn is_std_krate(name: &str) -> bool { STD_CRATES.iter().any(|c| *c == name) }
 
 fn cd_krate_dir(doc_dir: &Path, krate_name: &str) -> Result<PathBuf, LocationError> {
     let krate_dir: PathBuf = Some(doc_dir.join(krate_name))
@@ -133,4 +142,68 @@ fn step_into_module<'a, 'b>(
         cd = attempt;
     }
     (cd, rest)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::{
+        io::{BufRead, BufReader, Lines},
+        path::PathBuf,
+        process::{Child, ChildStdout, Command, Stdio}
+    };
+
+    // TODO: grep item
+    #[tokio::test]
+    async fn file_exists_for_every_line() {
+        let mut source = source();
+        let search_indexes = crate::search_index::search_indexes().await.unwrap();
+        for line in list(&mut source) {
+            let line = line.unwrap();
+            file_exists_for_every_line_impl(&search_indexes, line);
+        }
+    }
+
+    fn source() -> Child {
+        let child = Command::new("./target/debug/cargo-listdoc")
+            .args(&["listdoc", "show"])
+            .stdout(Stdio::piped())
+            .spawn()
+            .unwrap();
+        child
+    }
+
+    fn list(child: &mut Child) -> Lines<BufReader<ChildStdout>> {
+        let stdout = child.stdout.take().unwrap();
+        BufReader::new(stdout).lines()
+    }
+
+    fn file_exists_for_every_line_impl(search_indexes: &[PathBuf], line: String) {
+        let (path_components, ty) = parse_line(&line).unwrap();
+        let (krate_name, tail): (_, &[&str]) = split_krate(&path_components).unwrap();
+        if is_std_krate(krate_name) {
+            return;
+        }
+        let maybe_file = search_indexes
+            .iter()
+            .filter_map(|s| find(s, krate_name, tail, ty).ok())
+            .next();
+        if maybe_file.is_none() {
+            panic!("Not found {}", line);
+        }
+    }
+
+    // fn lines(s: String) -> Vec<String> {
+    //    let mut lines = Vec::new();
+    //    let mut buf = s;
+    //    while let Some(idx) = buf.find('\n') {
+    //        let new = buf.split_off(idx);
+    //        lines.push(buf);
+    //        buf = new;
+    //    }
+    //    if !buf.is_empty() {
+    //        lines.push(buf);
+    //    }
+    //    lines
+    //}
 }
