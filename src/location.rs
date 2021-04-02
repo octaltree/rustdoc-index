@@ -41,26 +41,14 @@ pub const STD_CRATES: &[&str] = &["alloc", "core", "proc_macro", "std", "test"];
 
 pub async fn location_from_line(line: &str) -> Result<String, Error> {
     let (path_components, ty) = parse_line(line)?;
-    let krate_name = *path_components.get(0).ok_or(LocationError::InvalidFormat)?;
-    let search_index: PathBuf = if is_std_crates(krate_name) {
-        crate::search_index::find_std()
-    } else {
-        crate::search_index::find_local()
-    }?
-    .ok_or(LocationError::DocNotFound)?;
+    let (krate_name, tail): (_, &[&str]) = split_krate(&path_components)?;
+    let search_index: PathBuf = find_search_index(krate_name)?;
     let doc_dir: &Path = search_index.parent().unwrap();
-    let krate_dir: PathBuf = Some(doc_dir.join(krate_name))
-        .filter(|p| p.is_dir())
-        .ok_or(LocationError::DocNotFound)?;
-    // TODO: conflicted primitive
-    let (file, rest) =
-        find_file(&krate_dir, &path_components).ok_or(LocationError::FileNotFound)?;
+    let krate_dir: PathBuf = cd_krate_dir(doc_dir, krate_name)?;
+    let (file, rest) = find_file(&krate_dir, tail).ok_or(LocationError::FileNotFound)?;
     let url = item_url(&file, rest, ty);
     Ok(url)
 }
-
-#[inline]
-fn is_std_crates(name: &str) -> bool { STD_CRATES.iter().any(|c| *c == name) }
 
 fn parse_line(line: &str) -> Result<(Vec<&str>, ItemType), Error> {
     let (fst, snd) = {
@@ -74,6 +62,33 @@ fn parse_line(line: &str) -> Result<(Vec<&str>, ItemType), Error> {
     Ok((path_components, ty))
 }
 
+fn split_krate<'a, 'b>(
+    path_components: &'a [&'b str]
+) -> Result<(&'b str, &'a [&'b str]), LocationError> {
+    let krate_name = *path_components.get(0).ok_or(LocationError::InvalidFormat)?;
+    Ok((krate_name, &path_components[1..]))
+}
+
+fn find_search_index(krate_name: &str) -> Result<PathBuf, Error> {
+    let search_index: PathBuf = if is_std_crates(krate_name) {
+        crate::search_index::find_std()
+    } else {
+        crate::search_index::find_local()
+    }?
+    .ok_or(LocationError::DocNotFound)?;
+    Ok(search_index)
+}
+
+#[inline]
+fn is_std_crates(name: &str) -> bool { STD_CRATES.iter().any(|c| *c == name) }
+
+fn cd_krate_dir(doc_dir: &Path, krate_name: &str) -> Result<PathBuf, LocationError> {
+    let krate_dir: PathBuf = Some(doc_dir.join(krate_name))
+        .filter(|p| p.is_dir())
+        .ok_or(LocationError::DocNotFound)?;
+    Ok(krate_dir)
+}
+
 fn item_url(file: &Path, rest: &[&str], ty: ItemType) -> String {
     if rest.is_empty() {
         format!("file://{}", file.display())
@@ -83,6 +98,8 @@ fn item_url(file: &Path, rest: &[&str], ty: ItemType) -> String {
     }
 }
 
+// TODO: conflicted primitive
+// 可能性があるパスを列挙してその中で存在するもの
 fn find_file<'a, 'b>(
     dir: &Path,
     path_components: &'a [&'b str]
