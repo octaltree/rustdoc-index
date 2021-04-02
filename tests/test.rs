@@ -20,7 +20,7 @@ fn list() -> Vec<String> {
 fn lines(s: String) -> Vec<String> {
     let mut lines = Vec::new();
     let mut buf = s;
-    while let Some(idx) = buf.find("\n") {
+    while let Some(idx) = buf.find('\n') {
         let new = buf.split_off(idx);
         lines.push(buf);
         buf = new;

@@ -16,7 +16,9 @@ pub enum LocationError {
     #[error("File not found")]
     FileNotFound,
     #[error("Item not found")]
-    ItemNotFound
+    ItemNotFound,
+    #[error("Doc dir not found")]
+    DocNotFound
 }
 
 pub const FILETYPE: &[ItemType] = &[
@@ -35,7 +37,32 @@ pub const FILETYPE: &[ItemType] = &[
     ItemType::ProcDerive
 ];
 
-pub async fn location_from_line(line: &str) -> Result<Option<String>, Error> {
+pub const STD_CRATES: &[&str] = &["alloc", "core", "proc_macro", "std", "test"];
+
+pub async fn location_from_line(line: &str) -> Result<String, Error> {
+    let (path_components, ty) = parse_line(line)?;
+    let krate_name = *path_components.get(0).ok_or(LocationError::InvalidFormat)?;
+    let search_index: PathBuf = if is_std_crates(krate_name) {
+        crate::search_index::find_std()
+    } else {
+        crate::search_index::find_local()
+    }?
+    .ok_or(LocationError::DocNotFound)?;
+    let doc_dir: &Path = search_index.parent().unwrap();
+    let krate_dir: PathBuf = Some(doc_dir.join(krate_name))
+        .filter(|p| p.is_dir())
+        .ok_or(LocationError::DocNotFound)?;
+    // TODO: conflicted primitive
+    let (file, rest) =
+        find_file(&krate_dir, &path_components).ok_or(LocationError::FileNotFound)?;
+    let url = item_url(&file, rest, ty);
+    Ok(url)
+}
+
+#[inline]
+fn is_std_crates(name: &str) -> bool { STD_CRATES.iter().any(|c| *c == name) }
+
+fn parse_line(line: &str) -> Result<(Vec<&str>, ItemType), Error> {
     let (fst, snd) = {
         let mut a = line.split_whitespace();
         a.next()
@@ -44,19 +71,7 @@ pub async fn location_from_line(line: &str) -> Result<Option<String>, Error> {
     }?;
     let ty = ItemType::from_str(snd).map_err(LocationError::from)?;
     let path_components = fst.split("::").collect::<Vec<_>>();
-    let krate_name = *path_components.get(0).ok_or(LocationError::InvalidFormat)?;
-    let search_indexes = crate::search_index::search_indexes().await?;
-    let doc_dirs: Vec<_> = search_indexes
-        .iter()
-        .map(|file| file.parent().unwrap())
-        .collect();
-    let doc_dir = match doc_dirs.iter().find(|dir| dir.join(krate_name).is_dir()) {
-        Some(p) => *p,
-        None => return Ok(None)
-    };
-    let (file, rest) = find_file(doc_dir, &path_components).ok_or(LocationError::FileNotFound)?;
-    let url = item_url(&file, rest, ty);
-    Ok(Some(url))
+    Ok((path_components, ty))
 }
 
 fn item_url(file: &Path, rest: &[&str], ty: ItemType) -> String {
@@ -68,7 +83,6 @@ fn item_url(file: &Path, rest: &[&str], ty: ItemType) -> String {
     }
 }
 
-// TODO: escaping??
 fn find_file<'a, 'b>(
     dir: &Path,
     path_components: &'a [&'b str]
