@@ -104,7 +104,6 @@ fn find_file<'a, 'b>(
     if rest.is_empty() {
         return Some((cd.join("index.html"), rest));
     }
-    println!("{:?} {:?}", &cd, rest);
     ls_file(&cd, rest)
 }
 
@@ -148,7 +147,6 @@ fn item_id(rest: &[&str], ty: ItemType) -> Option<String> {
     if rest.is_empty() {
         return None;
     }
-    println!("{:?} {:?}", rest, ty);
     if rest.len() == 1 {
         return if ty == ItemType::StructField && rest[0].parse::<i32>().is_ok() {
             None
@@ -181,21 +179,12 @@ mod tests {
 
     #[tokio::test]
     async fn item_exists_for_every_line() {
+        env_logger::builder().is_test(true).try_init().ok();
         let mut source = source();
         let search_indexes = crate::search_index::search_indexes().await.unwrap();
         for line in list(&mut source) {
             let line = line.unwrap();
-            item_exists_for_every_line_impl(&search_indexes, &line, true, false);
-        }
-    }
-
-    #[tokio::test]
-    async fn gh_item_exists_for_every_line() {
-        let mut source = source();
-        let search_indexes = crate::search_index::search_indexes().await.unwrap();
-        for line in list(&mut source) {
-            let line = line.unwrap();
-            item_exists_for_every_line_impl(&search_indexes, &line, true, true);
+            item_exists_for_every_line_impl(&search_indexes, &line, true);
         }
     }
 
@@ -213,22 +202,14 @@ mod tests {
         BufReader::new(stdout).lines()
     }
 
-    fn item_exists_for_every_line_impl(
-        search_indexes: &[PathBuf],
-        line: &str,
-        check_item: bool,
-        only_local: bool
-    ) {
+    fn item_exists_for_every_line_impl(search_indexes: &[PathBuf], line: &str, check_item: bool) {
         let (path_components, ty) = parse_line(line).unwrap();
         let (krate_name, tail): (_, &[&str]) = split_krate(&path_components).unwrap();
-        if only_local && is_std_krate(krate_name) {
-            return;
-        }
         if krate_name == "std" && tail[0] == "RawFd" {
-            println!("skip std::RawFd");
+            log::info!("skip std::RawFd");
             return;
         }
-        println!("{} {:?}", krate_name, tail);
+        log::debug!("{} {:?}", krate_name, tail);
         let maybe_file = search_indexes
             .iter()
             .find_map(|s| find(s, krate_name, tail, ty).ok());
@@ -246,7 +227,7 @@ mod tests {
             Some(x) => x,
             None => return
         };
-        println!("{}", url);
+        log::debug!("{}", url);
         let (file, item) = url.split_at(idx);
         let item = &item[1..];
         let file = file.strip_prefix("file://").unwrap();

@@ -1,4 +1,4 @@
-name: Test
+name: Build
 
 on:
   push:
@@ -26,5 +26,3 @@ jobs:
       run: cargo clippy --all-targets
     - name: Doc
       run: cargo doc
-    - name: Test
-      run: cargo test --all-targets gh_ -- --nocapture
