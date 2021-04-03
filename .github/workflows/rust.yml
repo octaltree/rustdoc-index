@@ -1,4 +1,4 @@
-name: Build
+name: Test
 
 on:
   push:
@@ -27,4 +27,4 @@ jobs:
     - name: Doc
       run: cargo doc
     - name: Test
-      run: cargo test --all-targets
+      run: cargo test --all-targets -- --nocapture
