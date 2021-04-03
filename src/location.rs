@@ -216,6 +216,10 @@ mod tests {
     fn file_exists_for_every_line_impl(search_indexes: &[PathBuf], line: &str, check_item: bool) {
         let (path_components, ty) = parse_line(line).unwrap();
         let (krate_name, tail): (_, &[&str]) = split_krate(&path_components).unwrap();
+        if krate_name == "std" && tail[0] == "RawFd" {
+            println!("skip std::RawFd");
+            return;
+        }
         println!("{} {:?}", krate_name, tail);
         let maybe_file = search_indexes
             .iter()
