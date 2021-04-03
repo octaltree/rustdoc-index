@@ -153,14 +153,24 @@ mod tests {
         process::{Child, ChildStdout, Command, Stdio}
     };
 
-    // TODO: grep item
     #[tokio::test]
     async fn file_exists_for_every_line() {
         let mut source = source();
         let search_indexes = crate::search_index::search_indexes().await.unwrap();
         for line in list(&mut source) {
             let line = line.unwrap();
-            file_exists_for_every_line_impl(&search_indexes, line);
+            file_exists_for_every_line_impl(&search_indexes, &line, false);
+            // file_exists_for_every_line_impl(&search_indexes, &line, true);
+        }
+    }
+
+    #[tokio::test]
+    async fn item_exists_for_every_line() {
+        let mut source = source();
+        let search_indexes = crate::search_index::search_indexes().await.unwrap();
+        for line in list(&mut source) {
+            let line = line.unwrap();
+            file_exists_for_every_line_impl(&search_indexes, &line, true);
         }
     }
 
@@ -178,18 +188,37 @@ mod tests {
         BufReader::new(stdout).lines()
     }
 
-    fn file_exists_for_every_line_impl(search_indexes: &[PathBuf], line: String) {
-        let (path_components, ty) = parse_line(&line).unwrap();
+    fn file_exists_for_every_line_impl(search_indexes: &[PathBuf], line: &str, check_item: bool) {
+        let (path_components, ty) = parse_line(line).unwrap();
         let (krate_name, tail): (_, &[&str]) = split_krate(&path_components).unwrap();
         if is_std_krate(krate_name) {
             return;
         }
         let maybe_file = search_indexes
             .iter()
-            .filter_map(|s| find(s, krate_name, tail, ty).ok())
-            .next();
-        if maybe_file.is_none() {
-            panic!("Not found {}", line);
+            .find_map(|s| find(s, krate_name, tail, ty).ok());
+        let file = match maybe_file {
+            None => panic!("Not found {}", line),
+            Some(x) => x
+        };
+        if check_item {
+            item_exists(&file);
+        }
+    }
+
+    fn item_exists(url: &str) {
+        let idx = match url.find('#') {
+            Some(x) => x,
+            None => return
+        };
+        println!("{}", url);
+        let (file, item) = url.split_at(idx);
+        let item = &item[1..];
+        let file = file.strip_prefix("file://").unwrap();
+        let id = format!(r#"id="{}""#, item);
+        let contents = std::fs::read_to_string(file).unwrap();
+        if !contents.contains(&id) {
+            panic!("Not found {} in {}", id, file);
         }
     }
 
