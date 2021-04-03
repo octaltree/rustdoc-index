@@ -1,5 +1,5 @@
 use crate::{
-    doc::{ItemType, ParseItemTypeError, FILETYPE},
+    doc::{ItemType, ParseItemTypeError, FILETYPE, STD_PRIMITIVES},
     Error
 };
 use std::{
@@ -38,7 +38,20 @@ fn find(
 ) -> Result<String, Error> {
     let doc_dir: &Path = search_index.parent().unwrap();
     let krate_dir: PathBuf = cd_krate_dir(doc_dir, krate_name)?;
-    let (file, rest) = find_file(&krate_dir, tail).ok_or(LocationError::FileNotFound)?;
+    if krate_name != "std" {
+        let (file, rest) = find_file(&krate_dir, tail).ok_or(LocationError::FileNotFound)?;
+        let url = item_url(&file, rest, ty);
+        return Ok(url);
+    }
+    let (file, rest) = match tail.len() {
+        1 if ty == ItemType::Primitive && STD_PRIMITIVES.iter().any(|p| *p == tail[0]) => {
+            ls_file(&krate_dir, tail).ok_or(LocationError::FileNotFound)?
+        }
+        2 if ty == ItemType::Method || ty == ItemType::AssocConst => {
+            ls_file(&krate_dir, tail).ok_or(LocationError::FileNotFound)?
+        }
+        _ => find_file(&krate_dir, tail).ok_or(LocationError::FileNotFound)?
+    };
     let url = item_url(&file, rest, ty);
     Ok(url)
 }
@@ -87,12 +100,16 @@ fn find_file<'a, 'b>(
     dir: &Path,
     path_components: &'a [&'b str]
 ) -> Option<(PathBuf, &'a [&'b str])> {
-    let (cd, mut rest) = step_into_module(dir, path_components);
+    let (cd, rest) = step_into_module(dir, path_components);
     if rest.is_empty() {
         return Some((cd.join("index.html"), rest));
     }
+    ls_file(&cd, rest)
+}
+
+fn ls_file<'a, 'b>(cd: &Path, rest: &'a [&'b str]) -> Option<(PathBuf, &'a [&'b str])> {
     let top = rest[0];
-    rest = &rest[1..];
+    let rest = &rest[1..];
     let found = FILETYPE
         .iter()
         .map(|ty| cd.join(format!("{}.{}.html", ty.as_str(), top)))
@@ -168,7 +185,6 @@ mod tests {
         for line in list(&mut source) {
             let line = line.unwrap();
             file_exists_for_every_line_impl(&search_indexes, &line, false);
-            // file_exists_for_every_line_impl(&search_indexes, &line, true);
         }
     }
 
@@ -199,9 +215,10 @@ mod tests {
     fn file_exists_for_every_line_impl(search_indexes: &[PathBuf], line: &str, check_item: bool) {
         let (path_components, ty) = parse_line(line).unwrap();
         let (krate_name, tail): (_, &[&str]) = split_krate(&path_components).unwrap();
-        if is_std_krate(krate_name) {
+        if !is_std_krate(krate_name) {
             return;
         }
+        println!("{} {:?}", krate_name, tail);
         let maybe_file = search_indexes
             .iter()
             .find_map(|s| find(s, krate_name, tail, ty).ok());

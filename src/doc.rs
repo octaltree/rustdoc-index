@@ -89,7 +89,7 @@ pub const FILETYPE: &[ItemType] = &[
     ItemType::ProcDerive
 ];
 
-pub const STD_PRIMITIVE: &[&str] = &[
+pub const STD_PRIMITIVES: &[&str] = &[
     "array",
     "bool",
     "char",
