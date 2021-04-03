@@ -99,16 +99,41 @@ fn cd_krate_dir(doc_dir: &Path, krate_name: &str) -> Result<PathBuf, LocationErr
 }
 
 fn item_url(file: &Path, rest: &[&str], ty: ItemType) -> String {
-    if rest.is_empty() {
-        format!("file://{}", file.display())
+    if let Some(id) = item_id(rest, ty) {
+        format!("file://{}#{}", file.display(), id)
     } else {
-        let top = rest[0];
-        format!("file://{}#{}.{}", file.display(), ty.as_str(), top)
+        format!("file://{}", file.display())
     }
 }
 
+fn item_id(rest: &[&str], ty: ItemType) -> Option<String> {
+    if rest.is_empty() {
+        return None;
+    }
+    println!("{:?} {:?}", rest, ty);
+    if rest.len() == 1 {
+        return if ty == ItemType::StructField && rest[0].parse::<i32>().is_ok() {
+            None
+        } else {
+            Some(format!("{}.{}", ty.as_str(), rest[0]))
+        };
+    }
+    if rest.len() == 2 {
+        if ty == ItemType::StructField {
+            return if rest[1].parse::<i32>().is_ok() {
+                Some(format!("variant.{}", rest[0]))
+            } else {
+                Some(format!("variant.{}.field.{}", rest[0], rest[1]))
+            };
+        }
+        // TODO: unknown
+        return Some(format!("{}.{}", ty.as_str(), rest[1]));
+    }
+    unreachable!()
+}
+
 // TODO: conflicted primitive
-// 可能性があるパスを列挙してその中で存在するもの
+// TODO: ansi_term type.ANSIStrings and fn.ANSIStrings
 fn find_file<'a, 'b>(
     dir: &Path,
     path_components: &'a [&'b str]

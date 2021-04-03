@@ -76,8 +76,9 @@ pub const FILETYPE: &[ItemType] = &[
     ItemType::Struct,
     ItemType::Union,
     ItemType::Enum,
-    ItemType::Function,
     ItemType::Typedef,
+    // Positioning after ty
+    ItemType::Function,
     ItemType::Static,
     ItemType::Trait,
     ItemType::Macro,
