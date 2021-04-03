@@ -104,6 +104,7 @@ fn find_file<'a, 'b>(
     if rest.is_empty() {
         return Some((cd.join("index.html"), rest));
     }
+    println!("{:?} {:?}", &cd, rest);
     ls_file(&cd, rest)
 }
 
@@ -215,9 +216,6 @@ mod tests {
     fn file_exists_for_every_line_impl(search_indexes: &[PathBuf], line: &str, check_item: bool) {
         let (path_components, ty) = parse_line(line).unwrap();
         let (krate_name, tail): (_, &[&str]) = split_krate(&path_components).unwrap();
-        if !is_std_krate(krate_name) {
-            return;
-        }
         println!("{} {:?}", krate_name, tail);
         let maybe_file = search_indexes
             .iter()

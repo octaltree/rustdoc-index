@@ -86,7 +86,8 @@ pub const FILETYPE: &[ItemType] = &[
     ItemType::Constant,
     ItemType::Keyword,
     ItemType::ProcAttribute,
-    ItemType::ProcDerive
+    ItemType::ProcDerive,
+    ItemType::TraitAlias
 ];
 
 pub const STD_PRIMITIVES: &[&str] = &[
