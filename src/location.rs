@@ -180,22 +180,22 @@ mod tests {
     };
 
     #[tokio::test]
-    async fn file_exists_for_every_line() {
-        let mut source = source();
-        let search_indexes = crate::search_index::search_indexes().await.unwrap();
-        for line in list(&mut source) {
-            let line = line.unwrap();
-            file_exists_for_every_line_impl(&search_indexes, &line, false);
-        }
-    }
-
-    #[tokio::test]
     async fn item_exists_for_every_line() {
         let mut source = source();
         let search_indexes = crate::search_index::search_indexes().await.unwrap();
         for line in list(&mut source) {
             let line = line.unwrap();
-            file_exists_for_every_line_impl(&search_indexes, &line, true);
+            item_exists_for_every_line_impl(&search_indexes, &line, true, false);
+        }
+    }
+
+    #[tokio::test]
+    async fn gh_item_exists_for_every_line() {
+        let mut source = source();
+        let search_indexes = crate::search_index::search_indexes().await.unwrap();
+        for line in list(&mut source) {
+            let line = line.unwrap();
+            item_exists_for_every_line_impl(&search_indexes, &line, true, true);
         }
     }
 
@@ -213,9 +213,17 @@ mod tests {
         BufReader::new(stdout).lines()
     }
 
-    fn file_exists_for_every_line_impl(search_indexes: &[PathBuf], line: &str, check_item: bool) {
+    fn item_exists_for_every_line_impl(
+        search_indexes: &[PathBuf],
+        line: &str,
+        check_item: bool,
+        only_local: bool
+    ) {
         let (path_components, ty) = parse_line(line).unwrap();
         let (krate_name, tail): (_, &[&str]) = split_krate(&path_components).unwrap();
+        if only_local && is_std_krate(krate_name) {
+            return;
+        }
         if krate_name == "std" && tail[0] == "RawFd" {
             println!("skip std::RawFd");
             return;

@@ -27,4 +27,4 @@ jobs:
     - name: Doc
       run: cargo doc
     - name: Test
-      run: cargo test --all-targets -- --nocapture
+      run: cargo test --all-targets gh_ -- --nocapture
