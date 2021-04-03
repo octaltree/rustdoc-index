@@ -25,6 +25,6 @@ jobs:
     - name: Lint
       run: cargo clippy --all-targets
     - name: Doc
-      run: caro doc
+      run: cargo doc
     - name: Test
       run: cargo test --all-targets
