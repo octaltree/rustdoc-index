@@ -1,5 +1,5 @@
 use crate::{
-    doc::{ItemType, ParseItemTypeError},
+    doc::{ItemType, ParseItemTypeError, FILETYPE},
     Error
 };
 use std::{
@@ -20,22 +20,6 @@ pub enum LocationError {
     #[error("Doc dir not found")]
     DocNotFound
 }
-
-pub const FILETYPE: &[ItemType] = &[
-    ItemType::Struct,
-    ItemType::Union,
-    ItemType::Enum,
-    ItemType::Function,
-    ItemType::Typedef,
-    ItemType::Static,
-    ItemType::Trait,
-    ItemType::Macro,
-    ItemType::Primitive,
-    ItemType::Constant,
-    ItemType::Keyword,
-    ItemType::ProcAttribute,
-    ItemType::ProcDerive
-];
 
 pub const STD_CRATES: &[&str] = &["alloc", "core", "proc_macro", "std", "test"];
 
@@ -98,6 +82,42 @@ fn cd_krate_dir(doc_dir: &Path, krate_name: &str) -> Result<PathBuf, LocationErr
     Ok(krate_dir)
 }
 
+// TODO: conflicted primitive
+fn find_file<'a, 'b>(
+    dir: &Path,
+    path_components: &'a [&'b str]
+) -> Option<(PathBuf, &'a [&'b str])> {
+    let (cd, mut rest) = step_into_module(dir, path_components);
+    if rest.is_empty() {
+        return Some((cd.join("index.html"), rest));
+    }
+    let top = rest[0];
+    rest = &rest[1..];
+    let found = FILETYPE
+        .iter()
+        .map(|ty| cd.join(format!("{}.{}.html", ty.as_str(), top)))
+        .find(|p| p.is_file())?;
+    Some((found, rest))
+}
+
+fn step_into_module<'a, 'b>(
+    dir: &Path,
+    path_components: &'a [&'b str]
+) -> (PathBuf, &'a [&'b str]) {
+    let mut cd: PathBuf = dir.into();
+    let mut rest: &[&str] = path_components;
+    while !rest.is_empty() {
+        let top = rest[0];
+        let attempt = cd.join(top);
+        if !attempt.is_dir() {
+            break;
+        }
+        rest = &rest[1..];
+        cd = attempt;
+    }
+    (cd, rest)
+}
+
 fn item_url(file: &Path, rest: &[&str], ty: ItemType) -> String {
     if let Some(id) = item_id(rest, ty) {
         format!("file://{}#{}", file.display(), id)
@@ -130,43 +150,6 @@ fn item_id(rest: &[&str], ty: ItemType) -> Option<String> {
         return Some(format!("{}.{}", ty.as_str(), rest[1]));
     }
     unreachable!()
-}
-
-// TODO: conflicted primitive
-// TODO: ansi_term type.ANSIStrings and fn.ANSIStrings
-fn find_file<'a, 'b>(
-    dir: &Path,
-    path_components: &'a [&'b str]
-) -> Option<(PathBuf, &'a [&'b str])> {
-    let (cd, mut rest) = step_into_module(dir, path_components);
-    if rest.is_empty() {
-        return Some((cd.join("index.html"), rest));
-    }
-    let top = rest[0];
-    let found = FILETYPE
-        .iter()
-        .map(|ty| cd.join(format!("{}.{}.html", ty.as_str(), top)))
-        .find(|p| p.is_file())?;
-    rest = &rest[1..];
-    Some((found, rest))
-}
-
-fn step_into_module<'a, 'b>(
-    dir: &Path,
-    path_components: &'a [&'b str]
-) -> (PathBuf, &'a [&'b str]) {
-    let mut cd: PathBuf = dir.into();
-    let mut rest: &[&str] = path_components;
-    while !rest.is_empty() {
-        let top = rest[0];
-        let attempt = cd.join(top);
-        if !attempt.is_dir() {
-            break;
-        }
-        rest = &rest[1..];
-        cd = attempt;
-    }
-    (cd, rest)
 }
 
 #[cfg(test)]

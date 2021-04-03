@@ -89,6 +89,34 @@ pub const FILETYPE: &[ItemType] = &[
     ItemType::ProcDerive
 ];
 
+pub const STD_PRIMITIVE: &[&str] = &[
+    "array",
+    "bool",
+    "char",
+    "f32",
+    "f64",
+    "fn",
+    "i128",
+    "i16",
+    "i32",
+    "i64",
+    "i8",
+    "isize",
+    "never",
+    "pointer",
+    "reference",
+    "slice",
+    "str",
+    "tuple",
+    "u128",
+    "u16",
+    "u32",
+    "u64",
+    "u8",
+    "unit",
+    "usize"
+];
+
 impl ItemType {
     pub fn as_str(&self) -> &'static str {
         match *self {
