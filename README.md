@@ -38,7 +38,7 @@ cargo listdoc | fzf --bind 'ctrl-i:execute(cargo listdoc location {}| xargs fire
 [denite](https://github.com/Shougo/denite.nvim) source is available.
 
 ### Installation
-This is how to install using [denite](https://github.com/Shougo/dein.vim).
+This is how to install using [dein](https://github.com/Shougo/dein.vim).
 ```toml
 [[plugins]]
 repo = 'octaltree/rustdoc-index'

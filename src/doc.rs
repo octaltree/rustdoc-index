@@ -76,8 +76,9 @@ pub const FILETYPE: &[ItemType] = &[
     ItemType::Struct,
     ItemType::Union,
     ItemType::Enum,
-    ItemType::Function,
     ItemType::Typedef,
+    // Positioning after ty
+    ItemType::Function,
     ItemType::Static,
     ItemType::Trait,
     ItemType::Macro,
@@ -85,7 +86,36 @@ pub const FILETYPE: &[ItemType] = &[
     ItemType::Constant,
     ItemType::Keyword,
     ItemType::ProcAttribute,
-    ItemType::ProcDerive
+    ItemType::ProcDerive,
+    ItemType::TraitAlias
+];
+
+pub const STD_PRIMITIVES: &[&str] = &[
+    "array",
+    "bool",
+    "char",
+    "f32",
+    "f64",
+    "fn",
+    "i128",
+    "i16",
+    "i32",
+    "i64",
+    "i8",
+    "isize",
+    "never",
+    "pointer",
+    "reference",
+    "slice",
+    "str",
+    "tuple",
+    "u128",
+    "u16",
+    "u32",
+    "u64",
+    "u8",
+    "unit",
+    "usize"
 ];
 
 impl ItemType {

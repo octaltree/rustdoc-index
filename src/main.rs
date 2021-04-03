@@ -44,8 +44,6 @@ async fn list() -> Result<(), Error> {
 
 async fn location(args: Location) -> Result<(), Error> {
     let url = location::location_from_line(&args.line).await?;
-    if let Some(url) = url {
-        println!("{}", url);
-    }
+    println!("{}", url);
     Ok(())
 }
