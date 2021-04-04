@@ -6,14 +6,12 @@ function! s:open_url(url) abort
     let url = shellescape(a:url)
     if has('win32') || has('win64')
         let cmd = 'rundll32 url.dll,FileProtocolHandler ' . url
-    elseif executable('xdg-open') && has('unix')
-        let cmd = 'xdg-open ' . url
     elseif executable('open') && has('mac')
         let cmd = 'open ' . url
-    elseif executable('google-chrome')
-        let cmd = 'google-chrome ' . url
     elseif executable('firefox')
         let cmd = 'firefox ' . url
+    elseif executable('google-chrome')
+        let cmd = 'google-chrome ' . url
     else
         call s:error('No command is found to open URL. Please set g:rust_doc#open_cmd')
         return
