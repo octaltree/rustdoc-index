@@ -39,7 +39,7 @@ fn find(
     let doc_dir: &Path = search_index.parent().unwrap();
     let krate_dir: PathBuf = cd_krate_dir(doc_dir, krate_name)?;
     if krate_name != "std" {
-        let (file, rest) = find_file(&krate_dir, tail).ok_or(LocationError::FileNotFound)?;
+        let (file, rest) = find_file(&krate_dir, tail, ty).ok_or(LocationError::FileNotFound)?;
         let url = item_url(&file, rest, ty);
         return Ok(url);
     }
@@ -50,7 +50,7 @@ fn find(
         2 if ty == ItemType::Method || ty == ItemType::AssocConst => {
             ls_file(&krate_dir, tail).ok_or(LocationError::FileNotFound)?
         }
-        _ => find_file(&krate_dir, tail).ok_or(LocationError::FileNotFound)?
+        _ => find_file(&krate_dir, tail, ty).ok_or(LocationError::FileNotFound)?
     };
     let url = item_url(&file, rest, ty);
     Ok(url)
@@ -95,12 +95,12 @@ fn cd_krate_dir(doc_dir: &Path, krate_name: &str) -> Result<PathBuf, LocationErr
     Ok(krate_dir)
 }
 
-// TODO: conflicted primitive
 fn find_file<'a, 'b>(
     dir: &Path,
-    path_components: &'a [&'b str]
+    path_components: &'a [&'b str],
+    ty: ItemType
 ) -> Option<(PathBuf, &'a [&'b str])> {
-    let (cd, rest) = step_into_module(dir, path_components);
+    let (cd, rest) = step_into_module(dir, path_components, ty);
     if rest.is_empty() {
         return Some((cd.join("index.html"), rest));
     }
@@ -119,11 +119,15 @@ fn ls_file<'a, 'b>(cd: &Path, rest: &'a [&'b str]) -> Option<(PathBuf, &'a [&'b 
 
 fn step_into_module<'a, 'b>(
     dir: &Path,
-    path_components: &'a [&'b str]
+    path_components: &'a [&'b str],
+    ty: ItemType
 ) -> (PathBuf, &'a [&'b str]) {
     let mut cd: PathBuf = dir.into();
     let mut rest: &[&str] = path_components;
     while !rest.is_empty() {
+        if rest.len() == 1 && FILETYPE.iter().any(|t| t == &ty) {
+            break;
+        }
         let top = rest[0];
         let attempt = cd.join(top);
         if !attempt.is_dir() {
