@@ -3,7 +3,7 @@ extern crate serde;
 #[macro_use]
 extern crate thiserror;
 
-pub const RUSTFMT_VERSION: &str = "rustfmt 1.4.36-nightly (7de6968 2021-02-07)";
+pub const RUSTDOC_VERSION: &str = "rustdoc 1.53.0-nightly (132b4e5d1 2021-04-13)";
 pub mod doc;
 pub mod location;
 pub mod search_index;
