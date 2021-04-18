@@ -44,7 +44,9 @@ pub fn read_search_index_and_show<P: AsRef<Path>>(src: P) -> Result<(), Error> {
             .map(|l| l.map_err(Error::from))
             .filter(|l| {
                 if let Ok(l) = &l {
-                    l != "}');" && l != "initSearch(searchIndex);"
+                    l != "}');"
+                        && l != "initSearch(searchIndex);"
+                        && l != "if (window.initSearch) {window.initSearch(searchIndex)};"
                 } else {
                     true
                 }
