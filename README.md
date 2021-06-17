@@ -7,8 +7,7 @@ A tool to quickly find the relevant item from rustdoc.
 ## Installation
 $ cargo install rustdoc-index
 
-Nightly only for now. Target rustdoc version is 1.53.0-nightly (132b4e5d1 2021-04-13).
-
+It requires Rust 1.53 that is now avaible on stable.
 
 ## Usage
 ```sh
