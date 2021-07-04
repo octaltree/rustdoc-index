@@ -8,24 +8,74 @@ pub struct Crate {
     // t, n, q, d, i, f are items array
     t: Vec<ItemType>,
     n: Vec<String>,
-    f: Vec<Option<Types>>,
+    f: F,
     q: Vec<String>,
     d: Vec<String>,
     i: Vec<usize> // p idx
 }
 
+/// <https://github.com/rust-lang/rust/blob/71a567fae4c282aa5ecb1e6e48f020ade8df23e7/src/librustdoc/html/render/mod.rs>
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub enum F {
+    V1_53_0(Vec<Option<Types>>),
+    V1_55_0(Vec<Option<Types1_55_0>>)
+}
+
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
 pub enum Types {
-    OnlyArgs((Vec<(String, usize)>,)),
-    WithResponse(Vec<(String, usize)>, ResponseType)
+    OnlyArgs((Vec<(String, ItemType)>,)),
+    WithResponse(Vec<(String, ItemType)>, ResponseType)
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
 pub enum ResponseType {
-    Single((String, usize)),
-    Complex(Vec<(String, usize)>)
+    Single((String, ItemType)),
+    Complex(Vec<(String, ItemType)>)
+}
+
+/// <https://github.com/rust-lang/rust/blob/71a567fae4c282aa5ecb1e6e48f020ade8df23e7/src/librustdoc/html/render/cache.rs#L219>
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub enum Types1_55_0 {
+    OnlyArgs((Vec<Type1_55_0>,)),
+    WithMultiResponse(Vec<Type1_55_0>, Vec<Type1_55_0>),
+    WithResponse(Vec<Type1_55_0>, Type1_55_0)
+}
+
+#[derive(Debug)]
+pub struct Type1_55_0 {
+    name: String,
+    generics: Option<Vec<String>>,
+    kind: ItemType
+}
+
+impl<'de> serde::Deserialize<'de> for Type1_55_0 {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>
+    {
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum De {
+            Two(String, ItemType),
+            Three(String, ItemType, Vec<String>)
+        }
+        Ok(match De::deserialize(deserializer)? {
+            De::Two(name, kind) => Self {
+                name,
+                generics: None,
+                kind
+            },
+            De::Three(name, kind, generics) => Self {
+                name,
+                generics: Some(generics),
+                kind
+            }
+        })
+    }
 }
 
 #[derive(Debug, serde_repr::Deserialize_repr)]
@@ -214,5 +264,33 @@ impl Crate {
                 }
             })
             .collect()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn parse_f() {
+        let _: F = serde_json::from_str("[null]").unwrap();
+        let _: F = serde_json::from_str(r#"[[[]]]"#).unwrap();
+        let _: F = serde_json::from_str(r#"[[[], ["osstr", 3]]]"#).unwrap();
+        let _: F = serde_json::from_str(r#"[[[["usize", 15]]]]"#).unwrap();
+        let _: Vec<Type1_55_0> =
+            serde_json::from_str(r#"[["pathbuf", 3], ["result", 6, ["pathbuf"]]]"#).unwrap();
+        let _: F = serde_json::from_str(
+            r#"[[
+                [],
+                [["pathbuf", 3], ["result", 6, ["pathbuf"]]]
+            ]]"#
+        )
+        .unwrap();
+        let _: F = serde_json::from_str(
+            r#"[[
+                [["utf8path", 3]],
+                ["ordering", 4]
+            ]]"#
+        )
+        .unwrap();
     }
 }

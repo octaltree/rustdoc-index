@@ -186,13 +186,13 @@ mod tests {
         env_logger::builder().is_test(true).try_init().ok();
         let mut source = source();
         let search_indexes = crate::search_index::search_indexes().await.unwrap();
-        let mut cnt = 0;
         for line in list(&mut source) {
             let line = line.unwrap();
             item_exists_for_every_line_impl(&search_indexes, &line, true);
-            cnt += 1;
         }
-        assert!(cnt > 0);
+        if !source.wait().unwrap().success() {
+            panic!("list failed");
+        }
     }
 
     fn source() -> Child {
