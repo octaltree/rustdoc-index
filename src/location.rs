@@ -38,7 +38,7 @@ fn find(
 ) -> Result<String, Error> {
     let doc_dir: &Path = search_index.parent().unwrap();
     let krate_dir: PathBuf = cd_krate_dir(doc_dir, krate_name)?;
-    if krate_name != "std" {
+    if krate_name != "std" && krate_name != "core" {
         let (file, rest) = find_file(&krate_dir, tail, ty).ok_or(LocationError::FileNotFound)?;
         let url = item_url(&file, rest, ty);
         return Ok(url);
