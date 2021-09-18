@@ -1,4 +1,6 @@
+use rayon::prelude::*;
 use rustdoc_index::*;
+use std::io::{stdout, BufWriter, Write};
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -37,7 +39,18 @@ async fn run(opt: Opt) -> Result<(), Error> {
 
 async fn list() -> Result<(), Error> {
     for search_index in search_index::search_indexes().await?.into_iter() {
-        read_search_index_and_show(search_index)?;
+        let doc = read_search_index(search_index)?;
+        doc.try_for_each(|r: Result<(String, doc::Crate), Error>| -> Result<(), _> {
+            let out = stdout();
+            let mut out = BufWriter::new(out.lock());
+            r.and_then(|(_name, krate)| -> Result<_, _> {
+                for path in krate.items() {
+                    writeln!(out, "{}", path)?;
+                }
+                Ok(())
+            })
+        })
+        .unwrap();
     }
     Ok(())
 }

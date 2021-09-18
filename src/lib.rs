@@ -11,7 +11,7 @@ pub mod search_index;
 use rayon::prelude::*;
 use std::{
     fs::File,
-    io::{stdout, BufRead, BufReader, BufWriter, Write},
+    io::{BufRead, BufReader},
     path::Path
 };
 
@@ -31,44 +31,27 @@ pub enum Error {
     Location(#[from] location::LocationError)
 }
 
-pub fn read_search_index_and_show<P: AsRef<Path>>(src: P) -> Result<(), Error> {
-    // read
-    let doc = {
-        let file = File::open(src.as_ref())?;
-        let reader = BufReader::new(file);
-        // one crate per one line
-        let mut lines = reader.lines();
-        lines.next(); // remove first line
-        lines
-            .par_bridge()
-            .map(|l| l.map_err(Error::from))
-            .filter(|l| {
-                if let Ok(l) = &l {
-                    l != "}');"
-                        && l != "initSearch(searchIndex);"
-                        && l != "if (window.initSearch) {window.initSearch(searchIndex)};"
-                } else {
-                    true
-                }
-            })
-            .map(|l: Result<String, Error>| l.and_then(parse_line))
-    };
-    // show
-    {
-        doc.try_for_each(|r: Result<(String, doc::Crate), Error>| -> Result<(), _> {
-            let out = stdout();
-            let mut out = BufWriter::new(out.lock());
-            r.and_then(|(_name, krate)| -> Result<_, _> {
-                for path in krate.items() {
-                    writeln!(out, "{}", path)?;
-                }
-                Ok(())
-            })
+pub fn read_search_index<P: AsRef<Path>>(
+    src: P
+) -> Result<impl rayon::iter::ParallelIterator<Item = Result<(String, doc::Crate), Error>>, Error> {
+    let file = File::open(src.as_ref())?;
+    let reader = BufReader::new(file);
+    // one crate per one line
+    let mut lines = reader.lines();
+    lines.next(); // remove first line
+    Ok(lines
+        .par_bridge()
+        .map(|l| l.map_err(Error::from))
+        .filter(|l| {
+            if let Ok(l) = &l {
+                l != "}');"
+                    && l != "initSearch(searchIndex);"
+                    && l != "if (window.initSearch) {window.initSearch(searchIndex)};"
+            } else {
+                true
+            }
         })
-        .unwrap();
-    }
-
-    Ok(())
+        .map(|l: Result<String, Error>| l.and_then(parse_line)))
 }
 
 /// Parses one line `"name":{..},`
