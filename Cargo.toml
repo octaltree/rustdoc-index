@@ -1,6 +1,6 @@
 [package]
 name = "rustdoc-index"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["octaltree <octaltree@users.noreply.github.com>"]
 edition = "2018"
 description = "A fast listing tool for rustdoc"
@@ -9,8 +9,6 @@ documentation = "https://docs.rs/rustdoc-index/"
 repository = "https://github.com/octaltree/rustdoc-index"
 categories = ["development-tools"]
 keywords = ["rustdoc"]
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [[bin]]
 name = "cargo-listdoc"
