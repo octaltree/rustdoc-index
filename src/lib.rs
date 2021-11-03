@@ -21,8 +21,8 @@ pub enum Error {
     InvalidFormat(String),
     #[error(transparent)]
     Io(#[from] std::io::Error),
-    #[error(transparent)]
-    SerdeJson(#[from] serde_json::error::Error),
+    #[error("{0:?} {1:?}")]
+    SerdeJson(String, serde_json::error::Error),
     #[error(transparent)]
     Metadata(#[from] cargo_metadata::Error),
     #[error(transparent)]
@@ -80,6 +80,8 @@ pub fn parse_line(line: String) -> Result<(String, doc::Crate), Error> {
         quoted_name.split_off(1)
     };
     let body = unescape::unescape(&body).ok_or_else(|| Error::InvalidFormat(body.clone()))?;
-    let krate: doc::Crate = serde_json::from_str(&body)?;
-    Ok((name, krate))
+    match serde_json::from_str(&body) {
+        Err(e) => Err(Error::SerdeJson(name, e)),
+        Ok(krate) => Ok((name, krate))
+    }
 }

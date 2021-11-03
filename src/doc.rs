@@ -19,7 +19,8 @@ pub struct Crate {
 #[serde(untagged)]
 pub enum F {
     V1_53_0(Vec<Option<Types>>),
-    V1_55_0(Vec<Option<Types1_55_0>>)
+    V1_55_0(Vec<Option<Types1_55_0>>),
+    V1_58_0(Vec<Option<Types1_58_0>>)
 }
 
 #[derive(Debug, Deserialize)]
@@ -52,6 +53,21 @@ pub struct Type1_55_0 {
     kind: ItemType
 }
 
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub enum Types1_58_0 {
+    OnlyArgs((Vec<Type1_58_0>,)),
+    WithMultiResponse(Vec<Type1_58_0>, Vec<Type1_58_0>),
+    WithResponse(Vec<Type1_58_0>, Type1_58_0)
+}
+
+#[derive(Debug)]
+pub struct Type1_58_0 {
+    name: String,
+    generics: Option<Vec<Type1_58_0>>,
+    kind: ItemType
+}
+
 impl<'de> serde::Deserialize<'de> for Type1_55_0 {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -62,6 +78,32 @@ impl<'de> serde::Deserialize<'de> for Type1_55_0 {
         enum De {
             Two(String, ItemType),
             Three(String, ItemType, Vec<String>)
+        }
+        Ok(match De::deserialize(deserializer)? {
+            De::Two(name, kind) => Self {
+                name,
+                generics: None,
+                kind
+            },
+            De::Three(name, kind, generics) => Self {
+                name,
+                generics: Some(generics),
+                kind
+            }
+        })
+    }
+}
+
+impl<'de> serde::Deserialize<'de> for Type1_58_0 {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>
+    {
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum De {
+            Two(String, ItemType),
+            Three(String, ItemType, Vec<Type1_58_0>)
         }
         Ok(match De::deserialize(deserializer)? {
             De::Two(name, kind) => Self {
@@ -119,7 +161,8 @@ pub enum ItemType {
     OpaqueTy = 22,
     ProcAttribute = 23,
     ProcDerive = 24,
-    TraitAlias = 25
+    TraitAlias = 25,
+    Generic = 26
 }
 
 pub const FILETYPE: &[ItemType] = &[
@@ -196,7 +239,8 @@ impl ItemType {
             ItemType::OpaqueTy => "opaque",
             ItemType::ProcAttribute => "attr",
             ItemType::ProcDerive => "derive",
-            ItemType::TraitAlias => "traitalias"
+            ItemType::TraitAlias => "traitalias",
+            ItemType::Generic => "generic"
         }
     }
 }
