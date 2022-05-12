@@ -101,7 +101,7 @@ fn find_file<'a, 'b>(
     ty: ItemType
 ) -> Option<(PathBuf, &'a [&'b str])> {
     let (cd, rest) = step_into_module(dir, path_components, ty);
-    if rest.is_empty() {
+    if rest.is_empty() || ty == ItemType::Import {
         return Some((cd.join("index.html"), rest));
     }
     ls_file(&cd, rest)
@@ -151,6 +151,9 @@ fn item_id(rest: &[&str], ty: ItemType) -> Option<String> {
     if rest.is_empty() {
         return None;
     }
+    if ty == ItemType::Import {
+        return Some(format!("reexport.{}", rest[0]));
+    }
     if rest.len() == 1 {
         return if ty == ItemType::StructField && rest[0].parse::<i32>().is_ok() {
             None
@@ -158,16 +161,12 @@ fn item_id(rest: &[&str], ty: ItemType) -> Option<String> {
             Some(format!("{}.{}", ty.as_str(), rest[0]))
         };
     }
-    if rest.len() == 2 {
-        if ty == ItemType::StructField {
-            return if rest[1].parse::<i32>().is_ok() {
-                Some(format!("variant.{}", rest[0]))
-            } else {
-                Some(format!("variant.{}.field.{}", rest[0], rest[1]))
-            };
-        }
-        // TODO: unknown
-        return Some(format!("{}.{}", ty.as_str(), rest[1]));
+    if rest.len() == 2 && ty == ItemType::StructField {
+        return if rest[1].parse::<i32>().is_ok() {
+            Some(format!("variant.{}", rest[0]))
+        } else {
+            Some(format!("variant.{}.field.{}", rest[0], rest[1]))
+        };
     }
     unreachable!()
 }
