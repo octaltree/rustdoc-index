@@ -38,7 +38,7 @@ async fn run(opt: Opt) -> Result<(), Error> {
 }
 
 async fn list() -> Result<(), Error> {
-    for search_index in search_index::search_indexes().await?.into_iter() {
+    for search_index in search_index::search_indexes(None).await?.into_iter() {
         let doc = read_search_index(search_index)?;
         doc.try_for_each(|r: Result<(String, doc::Crate), Error>| -> Result<(), _> {
             let out = stdout();
