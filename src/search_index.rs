@@ -22,8 +22,8 @@ pub fn find_std() -> Result<Option<PathBuf>, Error> {
     ls_search_index(dir)
 }
 
-pub fn find_local() -> Result<Option<PathBuf>, Error> {
-    let meta = match metadata() {
+pub fn find_local(current_dir: Option<PathBuf>) -> Result<Option<PathBuf>, Error> {
+    let meta = match metadata(current_dir) {
         Ok(x) => x,
         Err(_) => return Ok(None)
     };
@@ -34,9 +34,9 @@ pub fn find_local() -> Result<Option<PathBuf>, Error> {
     ls_search_index(&dir)
 }
 
-pub async fn search_indexes() -> Result<Vec<PathBuf>, Error> {
+pub async fn search_indexes(current_dir: Option<PathBuf>) -> Result<Vec<PathBuf>, Error> {
     let async_find_std = tokio::spawn(async { find_std() });
-    let async_find_local = tokio::spawn(async { find_local() });
+    let async_find_local = tokio::spawn(async { find_local(current_dir) });
     let (std, local) = tokio::join!(async_find_std, async_find_local);
     let mut res = Vec::with_capacity(2);
     if let Some(std) = std?? {
@@ -48,7 +48,7 @@ pub async fn search_indexes() -> Result<Vec<PathBuf>, Error> {
     Ok(res)
 }
 
-fn metadata() -> Result<cargo_metadata::Metadata, Error> {
+fn metadata(current_dir: Option<PathBuf>) -> Result<cargo_metadata::Metadata, Error> {
     let mut cmd = cargo_metadata::MetadataCommand::new();
     cmd.no_deps();
     cmd.other_options(vec![String::from("--offline")]);

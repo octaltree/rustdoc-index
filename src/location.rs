@@ -79,7 +79,7 @@ fn find_search_index(krate_name: &str) -> Result<PathBuf, Error> {
     let search_index: PathBuf = if is_std_krate(krate_name) {
         crate::search_index::find_std()
     } else {
-        crate::search_index::find_local()
+        crate::search_index::find_local(None)
     }?
     .ok_or(LocationError::DocNotFound)?;
     Ok(search_index)
@@ -184,7 +184,7 @@ mod tests {
     async fn item_exists_for_every_line() {
         env_logger::builder().is_test(true).try_init().ok();
         let mut source = source();
-        let search_indexes = crate::search_index::search_indexes().await.unwrap();
+        let search_indexes = crate::search_index::search_indexes(None).await.unwrap();
         for line in list(&mut source) {
             let line = line.unwrap();
             item_exists_for_every_line_impl(&search_indexes, &line, true);
