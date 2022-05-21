@@ -1,6 +1,6 @@
 [package]
 name = "rustdoc-index"
-version = "0.4.1"
+version = "0.5.0"
 authors = ["octaltree <octaltree@users.noreply.github.com>"]
 edition = "2021"
 description = "A fast listing tool for rustdoc"
