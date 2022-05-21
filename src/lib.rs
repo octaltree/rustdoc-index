@@ -47,6 +47,9 @@ pub fn read_search_index<P: AsRef<Path>>(
                 l != "}');"
                     && l != "initSearch(searchIndex);"
                     && l != "if (window.initSearch) {window.initSearch(searchIndex)};"
+                    // 1.63.0
+                    && l != "if (typeof window !== 'undefined' && window.initSearch) {window.initSearch(searchIndex)};"
+                    && l != "if (typeof exports !== 'undefined') {exports.searchIndex = searchIndex};"
             } else {
                 true
             }
