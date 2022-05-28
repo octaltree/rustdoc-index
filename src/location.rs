@@ -23,10 +23,10 @@ pub enum LocationError {
 
 pub const STD_CRATES: &[&str] = &["alloc", "core", "proc_macro", "std", "test"];
 
-pub async fn location_from_line(line: &str) -> Result<String, Error> {
+pub async fn location_from_line(line: &str, current_dir: Option<PathBuf>) -> Result<String, Error> {
     let (path_components, ty) = parse_line(line)?;
     let (krate_name, tail): (_, &[&str]) = split_krate(&path_components)?;
-    let search_index: PathBuf = find_search_index(krate_name)?;
+    let search_index: PathBuf = find_search_index(krate_name, current_dir)?;
     find(&search_index, krate_name, tail, ty)
 }
 
@@ -75,11 +75,11 @@ fn split_krate<'a, 'b>(
     Ok((krate_name, &path_components[1..]))
 }
 
-fn find_search_index(krate_name: &str) -> Result<PathBuf, Error> {
+fn find_search_index(krate_name: &str, current_dir: Option<PathBuf>) -> Result<PathBuf, Error> {
     let search_index: PathBuf = if is_std_krate(krate_name) {
         crate::search_index::find_std()
     } else {
-        crate::search_index::find_local(None)
+        crate::search_index::find_local(current_dir)
     }?
     .ok_or(LocationError::DocNotFound)?;
     Ok(search_index)
