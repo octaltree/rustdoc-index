@@ -6,6 +6,7 @@ A tool to quickly find the relevant item from rustdoc.
 
 ## Installation
 $ cargo install rustdoc-index
+$ rustup component add rust-docs
 
 It requires Rust 1.53 that is now avaible on stable.
 

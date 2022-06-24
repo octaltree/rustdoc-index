@@ -18,7 +18,10 @@ pub fn find_std() -> Result<Option<PathBuf>, Error> {
     let output = Command::new("rustup").args(&["doc", "--path"]).output()?;
     let out = unsafe { String::from_utf8_unchecked(output.stdout) };
     let file = PathBuf::from(out);
-    let dir = file.parent().unwrap();
+    let dir = match file.parent() {
+        Some(dir) => dir,
+        None => return Ok(None)
+    };
     ls_search_index(dir)
 }
 
