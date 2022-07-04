@@ -53,6 +53,9 @@ pub async fn search_indexes(current_dir: Option<PathBuf>) -> Result<Vec<PathBuf>
 
 fn metadata(current_dir: Option<PathBuf>) -> Result<cargo_metadata::Metadata, Error> {
     let mut cmd = cargo_metadata::MetadataCommand::new();
+    if let Some(d) = current_dir {
+        cmd.current_dir(d);
+    }
     cmd.no_deps();
     cmd.other_options(vec![String::from("--offline")]);
     Ok(cmd.exec()?)
