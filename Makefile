@@ -19,7 +19,7 @@ lint:
 
 test:
 	cargo build
-	cargo test --all-targets
+	cargo test --all-targets -- --nocapture
 
 doc:
 	cargo doc

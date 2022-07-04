@@ -1,5 +1,6 @@
 use std::str::FromStr;
 
+/// src/librustdoc/html/render/search_index.rs
 #[derive(Debug, Deserialize)]
 pub struct Crate {
     // doc: String,
@@ -8,7 +9,7 @@ pub struct Crate {
     // t, n, q, d, i, f are items array
     t: Vec<ItemType>,
     n: Vec<String>,
-    f: F,
+    // f: F,
     q: Vec<String>,
     d: Vec<String>,
     i: Vec<usize> // p idx
@@ -20,7 +21,8 @@ pub struct Crate {
 pub enum F {
     V1_53_0(Vec<Option<Types>>),
     V1_55_0(Vec<Option<Types1_55_0>>),
-    V1_58_0(Vec<Option<Types1_58_0>>)
+    V1_58_0(Vec<Option<Types1_58_0>>),
+    V1_64_0(Vec<Option<Types1_64_0>>)
 }
 
 #[derive(Debug, Deserialize)]
@@ -67,6 +69,10 @@ pub struct Type1_58_0 {
     generics: Option<Vec<Type1_58_0>>,
     kind: ItemType
 }
+
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub enum Types1_64_0 {}
 
 impl<'de> serde::Deserialize<'de> for Type1_55_0 {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
