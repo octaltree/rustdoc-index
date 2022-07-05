@@ -71,7 +71,9 @@ fn parse_line(line: &str) -> Result<(Vec<&str>, ItemType), Error> {
 fn split_krate<'a, 'b>(
     path_components: &'a [&'b str]
 ) -> Result<(&'b str, &'a [&'b str]), LocationError> {
-    let krate_name = *path_components.get(0).ok_or(LocationError::InvalidFormat)?;
+    let krate_name = path_components
+        .first()
+        .ok_or(LocationError::InvalidFormat)?;
     Ok((krate_name, &path_components[1..]))
 }
 

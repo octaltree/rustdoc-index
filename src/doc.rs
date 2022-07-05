@@ -9,7 +9,7 @@ pub struct Crate {
     // t, n, q, d, i, f are items array
     t: Vec<ItemType>,
     n: Vec<String>,
-    // f: F,
+    f: F,
     q: Vec<String>,
     d: Vec<String>,
     i: Vec<usize> // p idx
@@ -70,9 +70,29 @@ pub struct Type1_58_0 {
     kind: ItemType
 }
 
+/// <https://github.com/rust-lang/rust/blob/e1d1848cc60a407d06f90fd16877a19bed6edd9b/src/librustdoc/html/render/search_index.rs#L314>
+/// IndexItemFunctionType
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
-pub enum Types1_64_0 {}
+pub enum Types1_64_0 {
+    Unit(usize),
+    OnlyArgs((Args1_64_0,)),
+    F((Args1_64_0, Args1_64_0))
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub enum Args1_64_0 {
+    One(usize),
+    Args(TypeId1_64_0)
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub enum TypeId1_64_0 {
+    One(usize),
+    WithGenerics(Vec<TypeId1_64_0>)
+}
 
 impl<'de> serde::Deserialize<'de> for Type1_55_0 {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
