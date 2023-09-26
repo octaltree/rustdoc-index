@@ -1,5 +1,6 @@
 use num_enum::TryFromPrimitive;
 use serde::de;
+use std::collections::HashMap;
 use std::str::FromStr;
 
 /// src/librustdoc/html/render/search_index.rs
@@ -13,9 +14,16 @@ pub struct Crate {
     t: Vec<ItemType>,
     n: Vec<String>,
     f: F,
-    q: Vec<String>,
+    q: Q,
     d: Vec<String>,
     i: Vec<usize>, // p idx
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+enum Q {
+    V1_53_0(Vec<String>),
+    V1_72_0(Vec<(usize, String)>),
 }
 
 /// <https://github.com/rust-lang/rust/blob/71a567fae4c282aa5ecb1e6e48f020ade8df23e7/src/librustdoc/html/render/mod.rs>
@@ -342,17 +350,23 @@ impl Crate {
     // TODO: duplicated methods
     pub fn items(self) -> Vec<String> {
         let Self { p, t, n, q, i, .. } = self;
+        let mut q: HashMap<usize, String> = match q {
+            Q::V1_53_0(v) => v.into_iter().enumerate().collect(),
+            Q::V1_72_0(xs) => xs.into_iter().collect(),
+        };
         let items = (0..)
             .zip(t.into_iter())
             .zip(n.into_iter())
             .zip(i.into_iter())
-            .zip(q.into_iter())
-            .map(|((((no, t), n), i), q)| (no, t, n, i, q));
+            .enumerate()
+            .map(|(j, (((no, t), n), i))| (no, t, n, i, q.remove(&j)));
         let mut cd: String = String::new();
         items
             .map(|(_no, t, n, i, q)| {
-                if !q.is_empty() {
-                    cd = q;
+                if let Some(q) = q {
+                    if !q.is_empty() {
+                        cd = q;
+                    }
                 }
                 if i == 0 {
                     format!("{}::{}	{}", &cd, n, t.as_str())
