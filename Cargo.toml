@@ -24,6 +24,7 @@ serde_repr = "0.1.16"
 cargo_metadata = "0.15.4"
 tokio = { version = "1.32.0", features = ["rt-multi-thread", "macros"] }
 structopt = "0.3.26"
+num_enum = "0.7.0"
 #string_cache = "0.8.1"
 #timey = "0.2.0"
 

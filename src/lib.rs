@@ -1,3 +1,6 @@
+#![allow(ambiguous_associated_items)]
+// ItemType::Primitive
+
 #[macro_use]
 extern crate serde;
 #[macro_use]
@@ -11,7 +14,7 @@ use rayon::prelude::*;
 use std::{
     fs::File,
     io::{BufRead, BufReader},
-    path::Path
+    path::Path,
 };
 
 #[derive(Debug, Error)]
@@ -27,11 +30,11 @@ pub enum Error {
     #[error(transparent)]
     Join(#[from] tokio::task::JoinError),
     #[error(transparent)]
-    Location(#[from] location::LocationError)
+    Location(#[from] location::LocationError),
 }
 
 pub fn read_search_index<P: AsRef<Path>>(
-    src: P
+    src: P,
 ) -> Result<impl rayon::iter::ParallelIterator<Item = Result<(String, doc::Crate), Error>>, Error> {
     let file = File::open(src.as_ref())?;
     let reader = BufReader::new(file);
@@ -84,6 +87,6 @@ pub fn parse_line(line: String) -> Result<(String, doc::Crate), Error> {
     let body = unescape::unescape(&body).ok_or_else(|| Error::InvalidFormat(body.clone()))?;
     match serde_json::from_str(&body) {
         Err(e) => Err(Error::SerdeJson(name, e)),
-        Ok(krate) => Ok((name, krate))
+        Ok(krate) => Ok((name, krate)),
     }
 }

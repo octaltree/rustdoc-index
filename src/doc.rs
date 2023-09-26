@@ -1,3 +1,5 @@
+use num_enum::TryFromPrimitive;
+use serde::de;
 use std::str::FromStr;
 
 /// src/librustdoc/html/render/search_index.rs
@@ -7,6 +9,7 @@ pub struct Crate {
     p: Vec<(ParentType, String)>,
 
     // t, n, q, d, i, f are items array
+    #[serde(deserialize_with = "deserialize_items")]
     t: Vec<ItemType>,
     n: Vec<String>,
     f: F,
@@ -159,7 +162,7 @@ pub enum ParentType {
 }
 
 /// rust/src/librustdoc/formats/item_type.rs
-#[derive(Debug, serde_repr::Deserialize_repr, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, serde_repr::Deserialize_repr, PartialEq, Eq, Clone, Copy, TryFromPrimitive)]
 #[repr(u8)]
 pub enum ItemType {
     Module = 0,
@@ -268,6 +271,30 @@ impl ItemType {
             ItemType::TraitAlias => "traitalias",
             ItemType::Generic => "generic",
         }
+    }
+}
+
+fn deserialize_items<'de, D>(deserializer: D) -> Result<Vec<ItemType>, D::Error>
+where
+    D: de::Deserializer<'de>,
+{
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum Impl<'a> {
+        V(Vec<ItemType>),
+        S(&'a str),
+    }
+    let x: Impl<'_> = de::Deserialize::deserialize(deserializer)?;
+    match x {
+        Impl::V(v) => Ok(v),
+        Impl::S(s) => s
+            .chars()
+            .map(|c| -> Result<_, D::Error> {
+                let u = u8::try_from(c).map_err(de::Error::custom)?;
+                let t = ItemType::try_from(u - 65).map_err(de::Error::custom)?;
+                Ok(t)
+            })
+            .collect::<Result<Vec<_>, D::Error>>(),
     }
 }
 
